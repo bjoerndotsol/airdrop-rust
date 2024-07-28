@@ -27,4 +27,4 @@
 /solana-client/
 
 # Turbin3 specific stuff
-dev*.json
+*wallet.json
