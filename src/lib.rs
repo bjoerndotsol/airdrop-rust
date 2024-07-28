@@ -2,10 +2,14 @@
 
 #[cfg(test)]
 mod tests {
-    use solana_sdk::{pubkey::Pubkey, signature::{read_keypair_file, Keypair, Signature, Signer}};
+    use solana_sdk::{hash::Hash, pubkey::Pubkey, signature::{read_keypair_file, Keypair, Signature, Signer}, transaction::Transaction};
+    use solana_program::system_instruction::transfer;
     use solana_client::rpc_client::RpcClient;
     use bs58;
+    use dotenv::dotenv;
+    use std::env;
     use std::io::{self, BufRead, Stdin};
+    use std::str::FromStr;
 
     const RPC_URL: &str = "https://api.devnet.solana.com";
 
@@ -31,11 +35,27 @@ mod tests {
                 println!("Failed to request airdrop: {}", e);
             }
         }
-        
     }
 
     #[test]
-    fn transfer_sol() {}
+    fn transfer_sol() {
+        dotenv().ok();
+        let kp: Keypair = read_keypair_file("dev-wallet.json").expect("Could not find wallet file");
+        let public_key = env::var("PUBLIC_KEY").expect("PUBLIC_KEY not set");
+        println!("Your public key is: {}", public_key); 
+        let to_pubkey: Pubkey = Pubkey::from_str(&public_key).unwrap();
+        let rpc_client: RpcClient = RpcClient::new(RPC_URL);
+        let recent_blockhash: Hash = rpc_client.get_latest_blockhash().expect("Could not get recent blockhash");
+        let transaction: Transaction = Transaction::new_signed_with_payer(
+            &[transfer(&kp.pubkey(), &to_pubkey, 1_000_000)],
+            Some(&kp.pubkey()),
+            &vec![&kp],
+            recent_blockhash,
+        );
+        let signature: Signature = rpc_client.send_and_confirm_transaction(&transaction).expect("Error sending transaction");
+        println!("Success, check your TX here: ");
+        println!("https://explorer.solana.com/tx/{}?cluster=devnet", signature);
+    }
 
     #[test]
     fn base64_to_wallet(){

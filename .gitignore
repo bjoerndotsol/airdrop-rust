@@ -21,6 +21,7 @@
 # Other files to ignore
 *.log
 *.tmp
+.env*
 
 # Solana client
 /solana-client/
