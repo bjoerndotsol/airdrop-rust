@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use solana_sdk::{hash::Hash, pubkey::Pubkey, signature::{read_keypair_file, Keypair, Signature, Signer}, transaction::Transaction};
+    use solana_sdk::{hash::Hash, pubkey::Pubkey, signature::{read_keypair_file, Keypair, Signature, Signer}, transaction::Transaction, message::Message,};
     use solana_program::system_instruction::transfer;
     use solana_client::rpc_client::RpcClient;
     use bs58;
@@ -46,12 +46,22 @@ mod tests {
         let to_pubkey: Pubkey = Pubkey::from_str(&public_key).unwrap();
         let rpc_client: RpcClient = RpcClient::new(RPC_URL);
         let recent_blockhash: Hash = rpc_client.get_latest_blockhash().expect("Could not get recent blockhash");
+
+        let balance: u64 = rpc_client.get_balance(&kp.pubkey()).expect("Could not get balance");
+        println!("Your balance is: {}", balance);
+
+        let message: Message = Message::new_with_blockhash(&[transfer(&kp.pubkey(), &to_pubkey, balance)], Some(&kp.pubkey()), &recent_blockhash);
+
+        let fee = rpc_client.get_fee_for_message(&message).expect("Could not get fee for message");
+        println!("The fee for the transaction is: {}", fee);
+
         let transaction: Transaction = Transaction::new_signed_with_payer(
-            &[transfer(&kp.pubkey(), &to_pubkey, 1_000_000)],
+            &[transfer(&kp.pubkey(), &to_pubkey, balance - fee)],
             Some(&kp.pubkey()),
             &vec![&kp],
             recent_blockhash,
         );
+        
         let signature: Signature = rpc_client.send_and_confirm_transaction(&transaction).expect("Error sending transaction");
         println!("Success, check your TX here: ");
         println!("https://explorer.solana.com/tx/{}?cluster=devnet", signature);
