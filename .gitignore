@@ -1,0 +1,29 @@
+# Rust build artifacts
+/target/
+
+# Cargo.lock file (optional, if you want to ignore it)
+# Cargo.lock
+
+# IDE and editor files
+*.rs.bk
+*.rs.swp
+*.swp
+*.swo
+*.swn
+*.DS_Store
+*.idea/
+*.vscode/
+
+# Backup files
+*~
+*.bak
+
+# Other files to ignore
+*.log
+*.tmp
+
+# Solana client
+/solana-client/
+
+# Turbin3 specific stuff
+dev*.json
